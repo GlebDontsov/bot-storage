@@ -1,16 +1,33 @@
 package main
 
 import (
-	"bot-storage/clients/telegram"
+	"bot-storage/storage/sqlite"
+	"context"
 	"flag"
 	"log"
 )
 
-const tgBotHost = "api.telegram.org"
+const (
+	tgBotHost         = "api.telegram.org"
+	sqliteStoragePath = "data/sqlite"
+)
 
 func main() {
-	tgClient := telegram.New(tgBotHost, mustToken())
-	//fetcher := fether.New()
+	s, err := sqlite.New(sqliteStoragePath)
+	if err != nil {
+		log.Fatal("can not connect to storage: ", err)
+	}
+
+	if err := s.Init(context.TODO()); err != nil {
+		log.Fatal("can not init storage: ", err)
+	}
+
+	//eventsProcessor := telegram.New(
+	//	tgClient.New(tgBotHost, mustToken()),
+	//	s,
+	//)
+	//tgClient := telegram.New(tgBotHost, mustToken())
+	//fetcher := fetcher.New()
 	//processor := processor.New(tgClient)
 	//consumer.Start(fetcher, processor)
 }
