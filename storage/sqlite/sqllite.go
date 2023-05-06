@@ -4,6 +4,7 @@ import (
 	"bot-storage/lib/e"
 	"bot-storage/storage"
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
@@ -53,15 +54,16 @@ func (s *Storage) PickRandom(userName string) (*storage.Page, error) {
 }
 
 func (s *Storage) Remove(page *storage.Page) error {
-	q := `DELETE FROM pages WHERE utl = ? AND user_name = ?`
+	q := `DELETE FROM pages WHERE url = ? AND user_name = ?`
 	if _, err := s.db.Exec(q, page.URL, page.UserName); err != nil {
 		return e.Wrap("can not remove page", err)
 	}
+
 	return nil
 }
 
 func (s *Storage) IsExists(page *storage.Page) (bool, error) {
-	q := `SELECT COUNT(*) FROM pages WHERE url = ? AND = ?`
+	q := `SELECT COUNT(*) FROM pages WHERE url = ? AND user_name = ?`
 
 	var count int
 

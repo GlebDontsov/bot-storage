@@ -20,8 +20,8 @@ type Meta struct {
 }
 
 var (
-	ErrUnknownMetaType  = errors.New("unknown meta type")
 	ErrUnknownEventType = errors.New("unknown event type")
+	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
 func New(client *telegram.Client, storage storage.Storage) *Processor {
@@ -105,6 +105,7 @@ func fetchText(upd telegram.Update) string {
 	if upd.Message == nil {
 		return ""
 	}
+
 	return upd.Message.Text
 }
 

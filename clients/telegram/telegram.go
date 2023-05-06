@@ -17,7 +17,7 @@ type Client struct {
 }
 
 const (
-	getUpdateMethod   = "getUpdate"
+	getUpdateMethod   = "getUpdates"
 	sendMessageMethod = "sendMessage"
 )
 
@@ -38,7 +38,7 @@ func (c *Client) Updates(offset int, limit int) ([]Update, error) {
 
 	q := url.Values{}
 	q.Add("offset", strconv.Itoa(offset))
-	q.Add("offset", strconv.Itoa(limit))
+	q.Add("limit", strconv.Itoa(limit))
 
 	data, err := c.doRequest(getUpdateMethod, q)
 	if err != nil {

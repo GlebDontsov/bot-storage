@@ -11,7 +11,7 @@ import (
 
 const (
 	tgBotHost         = "api.telegram.org"
-	sqliteStoragePath = "data/sqlite"
+	sqliteStoragePath = "data/sqlite/storage.db"
 	batchSize         = 100
 )
 
@@ -41,7 +41,7 @@ func main() {
 
 func mustToken() string {
 	token := flag.String(
-		"token-bot-token",
+		"tg-bot-token",
 		"",
 		"token for access to telegram bot",
 	)
