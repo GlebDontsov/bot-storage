@@ -13,3 +13,23 @@ const (
 	msgSaved          = "Saved! 👌"
 	msgAlreadyExists  = "You have already have this page in your list 🤗"
 )
+
+const (
+	RndCmd   = "/rnd"
+	LastCmd  = "/last"
+	FirstCmd = "/first"
+	HelpCmd  = "/help"
+	StartCmd = "/start"
+)
+
+const (
+	ButtonHelp    = "О боте"
+	ButtonGetLink = "Получить ссылку"
+	buttonRnd     = "Получить случайную ссылку"
+	buttonLast    = "Получить добавленную ссылку"
+	buttonFirst   = "Получить последнюю добавленную ссылку"
+)
+
+const (
+	TextChoiceMethod = "Выберите какую ссылку хотите получит."
+)

@@ -4,16 +4,9 @@ import (
 	"bot-storage/lib/e"
 	"bot-storage/storage"
 	"errors"
-	"fmt"
 	"log"
 	"net/url"
 	"strings"
-)
-
-const (
-	RndCmd   = "/rnd"
-	HelpCmd  = "/help"
-	StartCmd = "/start"
 )
 
 func (p *Processor) doCmd(text string, chatID int, username string) error {
@@ -26,14 +19,21 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 	}
 
 	switch text {
-	case RndCmd:
-		return p.sendRandom(chatID, username)
-	case HelpCmd:
+	case RndCmd, buttonRnd:
+		return p.sendLink(chatID, username, RndCmd)
+	case LastCmd, buttonLast:
+		return p.sendLink(chatID, username, LastCmd)
+	case FirstCmd, buttonFirst:
+		return p.sendLink(chatID, username, FirstCmd)
+	case HelpCmd, ButtonHelp:
 		return p.sendHelp(chatID)
 	case StartCmd:
 		return p.sendHello(chatID)
+	case ButtonGetLink:
+		return p.choiceMethod(chatID)
 	default:
-		return p.tg.SendMessage(chatID, msgUnknownCommand)
+		return p.sendTag(chatID, username, text)
+		//return p.tg.SendMessage(chatID, msgUnknownCommand)
 	}
 }
 
@@ -49,45 +49,87 @@ func (p *Processor) savePage(chatID int, pageURL string, username string) error 
 	}
 
 	if isExists {
-		return p.tg.SendMessage(chatID, msgAlreadyExists)
+		return p.tg.SendMessage(chatID, msgAlreadyExists, "")
 	}
 
 	if err := p.storage.Save(page); err != nil {
-		fmt.Println("eeeeeeeeeeeeeeeeeee")
 		return e.Wrap("can not do command: save page", err)
 	}
 
-	if err := p.tg.SendMessage(chatID, msgSaved); err != nil {
-		fmt.Println("wwwwwwwwwwwwwwwwwwwwwwww")
+	if err := p.tg.SendMessage(chatID, msgSaved, ""); err != nil {
 		return e.Wrap("can not do command: save page", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) sendRandom(chatID int, username string) (err error) {
-	page, err := p.storage.PickRandom(username)
+func (p *Processor) sendLink(chatID int, username string, command string) (err error) {
+	buttonsMenu, err := createKeyBoard(ButtonGetLink, ButtonHelp)
+	if err != nil {
+		return e.Wrap("can not do buttons", err)
+	}
+
+	var page *storage.Page
+
+	switch command {
+	case RndCmd:
+		page, err = p.storage.PickRandom(username)
+	case FirstCmd:
+		page, err = p.storage.PickFirst(username)
+	case LastCmd:
+		page, err = p.storage.PickLast(username)
+	}
+
 	if err != nil && !errors.Is(err, storage.ErrNoSavedPages) {
-		return e.Wrap("can not do command: can not send random", err)
+		return e.Wrap("can not do command: can not send link", err)
 	}
 
 	if page == nil {
-		return p.tg.SendMessage(chatID, msgNoSavedPages)
+		return p.tg.SendMessage(chatID, msgNoSavedPages, buttonsMenu)
 	}
 
-	if err := p.tg.SendMessage(chatID, page.URL); err != nil {
-		return e.Wrap("can not do command: can not send random", err)
+	if err := p.tg.SendMessage(chatID, page.URL, buttonsMenu); err != nil {
+		return e.Wrap("can not do command: can not send link", err)
 	}
 
 	return p.storage.Remove(page)
 }
 
+func (p *Processor) sendTag(chatID int, username string, tag string) (err error) {
+	page, err := p.storage.PickTag(username, tag)
+	if err != nil && !errors.Is(err, storage.ErrNoSavedPages) {
+		return e.Wrap("can not do command: can not send tag", err)
+	}
+
+	if page == nil {
+		return p.tg.SendMessage(chatID, msgNoSavedPages, "")
+	}
+
+	if err := p.tg.SendMessage(chatID, page.URL, ""); err != nil {
+		return e.Wrap("can not do command: can not send tag", err)
+	}
+
+	return nil
+}
+
 func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHelp)
+	return p.tg.SendMessage(chatID, msgHelp, "")
 }
 
 func (p *Processor) sendHello(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHello)
+	buttonsMenu, err := createKeyBoard(ButtonGetLink, ButtonHelp)
+	if err != nil {
+		return e.Wrap("can not do buttons", err)
+	}
+	return p.tg.SendMessage(chatID, msgHello, buttonsMenu)
+}
+
+func (p *Processor) choiceMethod(chatID int) error {
+	buttonsChoiceMethod, err := createKeyBoard(buttonLast, buttonRnd, buttonFirst)
+	if err != nil {
+		return e.Wrap("can not do buttons", err)
+	}
+	return p.tg.SendMessage(chatID, TextChoiceMethod, buttonsChoiceMethod)
 }
 
 func isAddCmd(text string) bool {

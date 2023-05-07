@@ -43,8 +43,69 @@ func (s *Storage) PickRandom(userName string) (*storage.Page, error) {
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, e.Wrap("can not pick random page", err)
+	}
+
+	return &storage.Page{
+		URL:      url,
+		UserName: userName,
+	}, nil
+}
+
+func (s *Storage) PickLast(userName string) (*storage.Page, error) {
+	q := `SELECT url FROM pages WHERE user_name = ? ORDER BY created_at ASC LIMIT 1`
+
+	var url string
+
+	err := s.db.QueryRow(q, userName).Scan(&url)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, e.Wrap("can not pick last page", err)
+	}
+
+	return &storage.Page{
+		URL:      url,
+		UserName: userName,
+	}, nil
+}
+
+func (s *Storage) PickFirst(userName string) (*storage.Page, error) {
+	q := `SELECT url FROM pages WHERE user_name = ? ORDER BY created_at DESC LIMIT 1`
+
+	var url string
+
+	err := s.db.QueryRow(q, userName).Scan(&url)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, e.Wrap("can not pick first page", err)
+	}
+
+	return &storage.Page{
+		URL:      url,
+		UserName: userName,
+	}, nil
+}
+
+func (s *Storage) PickTag(userName string, tag string) (*storage.Page, error) {
+	q := `SELECT url FROM pages WHERE user_name = ? AND url LIKE '%' || ? || '%' LIMIT 1`
+
+	var url string
+
+	err := s.db.QueryRow(q, userName, tag).Scan(&url)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, e.Wrap("can not pick tag page", err)
 	}
 
 	return &storage.Page{
@@ -75,7 +136,7 @@ func (s *Storage) IsExists(page *storage.Page) (bool, error) {
 }
 
 func (s *Storage) Init() error {
-	q := `CREATE TABLE IF NOT EXISTS pages (url TEXT, user_name TEXT)`
+	q := `CREATE TABLE IF NOT EXISTS pages (url TEXT, user_name TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
 
 	_, err := s.db.Exec(q)
 	if err != nil {

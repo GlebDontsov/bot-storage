@@ -2,7 +2,7 @@ package main
 
 import (
 	tgClient "bot-storage/clients/telegram"
-	"bot-storage/consumer/event-comsumer"
+	event_consumer "bot-storage/consumer/event-comsumer"
 	"bot-storage/events/telegram"
 	"bot-storage/storage/sqlite"
 	"flag"

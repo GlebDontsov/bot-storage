@@ -20,3 +20,11 @@ type Event struct {
 	Text string
 	Meta interface{}
 }
+
+type KeyBoard struct {
+	Buttons [][]Button `json:"keyboard"`
+}
+
+type Button struct {
+	Text string `json:"text"`
+}
