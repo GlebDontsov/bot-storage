@@ -54,6 +54,23 @@ func (s *Storage) PickRandom(userName string) (*storage.Page, error) {
 	}, nil
 }
 
+func (s *Storage) Count(userName string) (int, error) {
+	q := `SELECT COUNT(*) FROM pages WHERE user_name = ?`
+
+	var num int
+
+	err := s.db.QueryRow(q, userName).Scan(&num)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, e.Wrap("can not pick count", err)
+	}
+
+	return num, nil
+}
+
 func (s *Storage) PickLast(userName string) (*storage.Page, error) {
 	q := `SELECT url FROM pages WHERE user_name = ? ORDER BY created_at ASC LIMIT 1`
 
@@ -94,7 +111,7 @@ func (s *Storage) PickFirst(userName string) (*storage.Page, error) {
 	}, nil
 }
 
-func (s *Storage) PickTag(userName string, tag string) (*storage.Page, error) {
+func (s *Storage) Search(userName string, tag string) (*storage.Page, error) {
 	q := `SELECT url FROM pages WHERE user_name = ? AND url LIKE '%' || ? || '%' LIMIT 1`
 
 	var url string

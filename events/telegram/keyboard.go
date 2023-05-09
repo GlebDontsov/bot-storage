@@ -13,14 +13,41 @@ type Button struct {
 	Text string `json:"text"`
 }
 
-func createKeyBoard(nameButton ...string) (string, error) {
-	var listButton []Button
-	for _, v := range nameButton {
-		listButton = append(listButton, Button{Text: v})
+func ButtonMenu() (string, error) {
+	rowButtons1 := []Button{
+		{Text: ButtonGetLink},
+		{Text: buttonAll},
+	}
+
+	rowButtons2 := []Button{
+		{Text: buttonCount},
+		{Text: ButtonHelp},
 	}
 
 	keyboard := KeyBoard{
-		Buttons: [][]Button{listButton},
+		Buttons: [][]Button{rowButtons1, rowButtons2},
+	}
+
+	jsonKeyboard, err := json.Marshal(keyboard)
+	if err != nil {
+		return "", e.Wrap("json data encoding error", err)
+	}
+
+	return string(jsonKeyboard), nil
+}
+
+func ButtonSendLink() (string, error) {
+	rowButtons1 := []Button{
+		{Text: buttonFirst},
+		{Text: buttonLast},
+	}
+
+	rowButtons2 := []Button{
+		{Text: buttonRnd},
+	}
+
+	keyboard := KeyBoard{
+		Buttons: [][]Button{rowButtons1, rowButtons2},
 	}
 
 	jsonKeyboard, err := json.Marshal(keyboard)

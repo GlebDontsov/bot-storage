@@ -4,10 +4,11 @@ import "errors"
 
 type Storage interface {
 	Save(p *Page) error
+	Count(userName string) (int, error)
 	PickRandom(userName string) (*Page, error)
 	PickLast(userName string) (*Page, error)
 	PickFirst(userName string) (*Page, error)
-	PickTag(userName string, tag string) (*Page, error)
+	Search(userName string, tag string) (*Page, error)
 	PickAll(userName string) ([]*Page, error)
 	PickID(userName string, id int) (*Page, error)
 	Remove(p *Page) error
