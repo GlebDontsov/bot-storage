@@ -114,6 +114,54 @@ func (s *Storage) PickTag(userName string, tag string) (*storage.Page, error) {
 	}, nil
 }
 
+func (s *Storage) PickID(userName string, id int) (*storage.Page, error) {
+	q := `SELECT url FROM pages WHERE user_name = ? AND id = ?`
+
+	var url string
+
+	err := s.db.QueryRow(q, userName, id).Scan(&url)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, e.Wrap("can not pick id page", err)
+	}
+
+	return &storage.Page{
+		URL:      url,
+		UserName: userName,
+	}, nil
+}
+
+func (s *Storage) PickAll(userName string) ([]*storage.Page, error) {
+	q := `SELECT id, url FROM pages WHERE user_name = ?`
+
+	rows, err := s.db.Query(q, userName)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, e.Wrap("can not pick tag page", err)
+	}
+
+	var listRows []*storage.Page
+	for rows.Next() {
+		var id int
+		var url string
+		if err := rows.Scan(&id, &url); err != nil {
+			return nil, e.Wrap("can not pick tag page", err)
+		}
+		listRows = append(listRows, &storage.Page{
+			ID:  id,
+			URL: url,
+		})
+	}
+
+	return listRows, nil
+}
+
 func (s *Storage) Remove(page *storage.Page) error {
 	q := `DELETE FROM pages WHERE url = ? AND user_name = ?`
 	if _, err := s.db.Exec(q, page.URL, page.UserName); err != nil {
@@ -136,7 +184,7 @@ func (s *Storage) IsExists(page *storage.Page) (bool, error) {
 }
 
 func (s *Storage) Init() error {
-	q := `CREATE TABLE IF NOT EXISTS pages (url TEXT, user_name TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
+	q := `CREATE TABLE IF NOT EXISTS pages (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT, user_name TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
 
 	_, err := s.db.Exec(q)
 	if err != nil {

@@ -4,8 +4,10 @@ import (
 	"bot-storage/lib/e"
 	"bot-storage/storage"
 	"errors"
+	"fmt"
 	"log"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -19,6 +21,8 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 	}
 
 	switch text {
+	case AllCmd, buttonAll:
+		return p.sendAll(chatID, username)
 	case RndCmd, buttonRnd:
 		return p.sendLink(chatID, username, RndCmd)
 	case LastCmd, buttonLast:
@@ -32,8 +36,11 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 	case ButtonGetLink:
 		return p.choiceMethod(chatID)
 	default:
-		return p.sendTag(chatID, username, text)
-		//return p.tg.SendMessage(chatID, msgUnknownCommand)
+		ID, err := strconv.Atoi(text)
+		if err != nil {
+			return p.sendTag(chatID, username, text)
+		}
+		return p.sendID(chatID, username, ID)
 	}
 }
 
@@ -64,7 +71,7 @@ func (p *Processor) savePage(chatID int, pageURL string, username string) error 
 }
 
 func (p *Processor) sendLink(chatID int, username string, command string) (err error) {
-	buttonsMenu, err := createKeyBoard(ButtonGetLink, ButtonHelp)
+	buttonsMenu, err := createKeyBoard(ButtonGetLink, buttonAll, ButtonHelp)
 	if err != nil {
 		return e.Wrap("can not do buttons", err)
 	}
@@ -112,12 +119,51 @@ func (p *Processor) sendTag(chatID int, username string, tag string) (err error)
 	return nil
 }
 
+func (p *Processor) sendID(chatID int, userName string, ID int) error {
+	page, err := p.storage.PickID(userName, ID)
+	if err != nil && !errors.Is(err, storage.ErrNoSavedPages) {
+		return e.Wrap("can not do command: can not send tag", err)
+	}
+
+	if page == nil {
+		return p.tg.SendMessage(chatID, msgNoSavedPages, "")
+	}
+
+	if err := p.tg.SendMessage(chatID, page.URL, ""); err != nil {
+		return e.Wrap("can not do command: can not send page all", err)
+	}
+
+	return p.storage.Remove(page)
+}
+
+func (p *Processor) sendAll(chatID int, username string) (err error) {
+	pages, err := p.storage.PickAll(username)
+	if err != nil && !errors.Is(err, storage.ErrNoSavedPages) {
+		return e.Wrap("can not do command: can not send tag", err)
+	}
+
+	if pages == nil {
+		return p.tg.SendMessage(chatID, msgNoSavedPages, "")
+	}
+
+	response := ""
+	for _, page := range pages {
+		response += fmt.Sprintf("ID: %d - %s\n", page.ID, page.URL)
+	}
+
+	if err := p.tg.SendMessage(chatID, response, ""); err != nil {
+		return e.Wrap("can not do command: can not send page all", err)
+	}
+
+	return nil
+}
+
 func (p *Processor) sendHelp(chatID int) error {
 	return p.tg.SendMessage(chatID, msgHelp, "")
 }
 
 func (p *Processor) sendHello(chatID int) error {
-	buttonsMenu, err := createKeyBoard(ButtonGetLink, ButtonHelp)
+	buttonsMenu, err := createKeyBoard(ButtonGetLink, buttonAll, ButtonHelp)
 	if err != nil {
 		return e.Wrap("can not do buttons", err)
 	}
@@ -129,7 +175,7 @@ func (p *Processor) choiceMethod(chatID int) error {
 	if err != nil {
 		return e.Wrap("can not do buttons", err)
 	}
-	return p.tg.SendMessage(chatID, TextChoiceMethod, buttonsChoiceMethod)
+	return p.tg.SendMessage(chatID, msgChoiceMethod, buttonsChoiceMethod)
 }
 
 func isAddCmd(text string) bool {

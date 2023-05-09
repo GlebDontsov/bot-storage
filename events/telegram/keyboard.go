@@ -1,19 +1,26 @@
 package telegram
 
 import (
-	"bot-storage/events"
 	"bot-storage/lib/e"
 	"encoding/json"
 )
 
+type KeyBoard struct {
+	Buttons [][]Button `json:"keyboard"`
+}
+
+type Button struct {
+	Text string `json:"text"`
+}
+
 func createKeyBoard(nameButton ...string) (string, error) {
-	var listButton []events.Button
+	var listButton []Button
 	for _, v := range nameButton {
-		listButton = append(listButton, events.Button{Text: v})
+		listButton = append(listButton, Button{Text: v})
 	}
 
-	keyboard := events.KeyBoard{
-		Buttons: [][]events.Button{listButton},
+	keyboard := KeyBoard{
+		Buttons: [][]Button{listButton},
 	}
 
 	jsonKeyboard, err := json.Marshal(keyboard)
